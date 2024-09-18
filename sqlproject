@@ -1,0 +1,63 @@
+def perform_transaction(cursor, customer_id, amount, transaction_type):
+    try:
+        cursor.execute("BEGIN TRANSACTION")
+        # Execute operations
+        cursor.execute("COMMIT")
+    except Exception as e:
+        cursor.execute("ROLLBACK")
+        raise e  # Log the error in a centralized system
+
+class CustomerManagement:
+    def add_customer(self, customer_id, name, age, address, account_type, balance):
+        # Code to add a customer
+class TransactionManagement:
+    def add_transaction(self, customer_id, amount, transaction_type):
+        # Code to add transaction
+#deployment
+FROM python:3.9
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+CMD ["python", "app.py"]
+import logging
+logging.basicConfig(level=logging.INFO)
+logging.info('Transaction Successful for CustomerID: %s', customer_id)
+
+
+sample code
+import pypyodbc
+import logging
+
+# Connect to the database
+connection = pypyodbc.connect('Driver={SQL Server};Server=server_name;Database=CTMS;UID=user;PWD=password;')
+cursor = connection.cursor()
+
+class CustomerManagement:
+    def add_customer(self, customer_id, name, age, address, account_type, balance):
+        try:
+            cursor.execute("INSERT INTO Customers (CustomerID, Name, Age, Address, AccountType, Balance) VALUES (?, ?, ?, ?, ?, ?)",
+                           (customer_id, name, age, address, account_type, balance))
+            connection.commit()
+            logging.info(f"Customer {customer_id} added successfully")
+        except pypyodbc.DatabaseError as e:
+            connection.rollback()
+            logging.error(f"Error adding customer: {e}")
+            raise
+
+class TransactionManagement:
+    def add_transaction(self, customer_id, amount, transaction_type):
+        try:
+            cursor.execute("BEGIN TRANSACTION")
+            cursor.execute("INSERT INTO Transactions (CustomerID, Date, Amount, TransactionType) VALUES (?, GETDATE(), ?, ?)",
+                           (customer_id, amount, transaction_type))
+            if transaction_type == 'Deposit':
+                cursor.execute("UPDATE Customers SET Balance = Balance + ? WHERE CustomerID = ?", (amount, customer_id))
+            elif transaction_type == 'Withdrawal':
+                cursor.execute("UPDATE Customers SET Balance = Balance - ? WHERE CustomerID = ?", (amount, customer_id))
+            cursor.execute("COMMIT")
+            logging.info(f"Transaction of {amount} {transaction_type} for CustomerID {customer_id} successful")
+        except pypyodbc.DatabaseError as e:
+            cursor.execute("ROLLBACK")
+            logging.error(f"Transaction failed: {e}")
+            raise
