@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.INFO)
 logging.info('Transaction Successful for CustomerID: %s', customer_id)
 
 
-sample code
+#sample code
 import pypyodbc
 import logging
 
